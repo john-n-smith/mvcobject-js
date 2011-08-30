@@ -21,7 +21,7 @@ MVCObject.prototype.bindTo = function(key, target, target_key, no_notify)
 	// Make the target's key a complex object.
 	if(target[target_key] !== undefined && ( target[target_key] === null || !target[target_key].__jns ) )
 	{
-		target.set(target_key, target[target_key], true);
+		target._set(target_key, target[target_key], true);
 	}
 
 	// Make my property a reference to the target's property
@@ -52,10 +52,15 @@ MVCObject.prototype.get = function(key)
 
 MVCObject.prototype.notify = function(key)
 {
-	alert('this doesn\'t do anything... What should it do?');
+	// Not sure what this does? Perhaps something internal in the Google Maps V3... I've found no need.
 };
 
 MVCObject.prototype.set = function(key, value, is_initial_set)
+{
+	this.set(key, value, false);
+};
+
+MVCObject.prototype._set = function(key, value, is_initial_set)
 {
 	// If the property exists and is a complex object, update it.
 	if(this[key] && this[key].__jns !== undefined)
@@ -87,7 +92,7 @@ MVCObject.prototype.setValues = function(key_value_pairs)
 {
 	for(var key in key_value_pairs)
 	{
-		this.set(key, key_value_pairs[key]);
+		this._set(key, key_value_pairs[key], false);
 	}
 };
 
