@@ -8,8 +8,6 @@
 * 
 * Also, a fairly decent usuage overview: http://groups.google.com/group/google-maps-js-api-v3/browse_thread/thread/db6877615d7f4641/def7c933666a1f63?lnk=raot
 * 
-* Now supports the '_changed'callback!
-* 
 * @author John Smith
 */
 function MVCObject(){};
@@ -52,12 +50,14 @@ MVCObject.prototype.get = function(key)
 
 MVCObject.prototype.notify = function(key)
 {
-	// Not sure what this does? Perhaps something internal in the Google Maps V3... I've found no need.
+	alert('this doesn\'t do anything... What should it do?');
 };
 
-MVCObject.prototype.set = function(key, value, is_initial_set)
+
+
+MVCObject.prototype.set = function(key, value)
 {
-	this.set(key, value, false);
+	this._set(key, value, false);
 };
 
 MVCObject.prototype._set = function(key, value, is_initial_set)
