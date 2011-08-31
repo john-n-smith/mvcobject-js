@@ -110,3 +110,15 @@ MVCObject.prototype.unbindAll = function()
 		this.unbind(key);
 	}
 };
+
+// Below are the public methods to be exported when using Google's Closure Compiler - http://code.google.com/closure/compiler/
+// Uncomment if you wish to compile the code using 'advanced optimisation'.
+/*
+window['MVCObject'] = MVCObject;
+window['MVCObject'].prototype['bindTo'] = MVCObject.prototype.bindTo;
+window['MVCObject'].prototype['get'] = MVCObject.prototype.get;
+window['MVCObject'].prototype['set'] = MVCObject.prototype.set;
+window['MVCObject'].prototype['setValues'] = MVCObject.prototype.setValues;
+window['MVCObject'].prototype['unbind'] = MVCObject.prototype.unbind;
+window['MVCObject'].prototype['unbindAll'] = MVCObject.prototype.unbindAll;
+*/
