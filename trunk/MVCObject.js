@@ -14,7 +14,7 @@ function MVCObject(){};
 
 MVCObject.prototype.bindTo = function(key, target, target_key, no_notify)
 {
-	var target_key = target_key || key;
+	target_key = target_key || key;
 
 	// Make the target's key a complex object.
 	if(target[target_key] !== undefined && ( target[target_key] === null || !target[target_key].__jns ) )
