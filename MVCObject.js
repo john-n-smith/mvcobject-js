@@ -1,15 +1,26 @@
 /**
-* This is an implementation of the Key Value Observer pattern, that makes our MVC based lives easier.
-* It facilitates easy binding of View objects to their respective Models. It's super mega hot.
-* 
-* I've pretty much replicated Google Map's API V3's 'MVCObject()' - http://code.google.com/apis/maps/documentation/javascript/reference.html#MVCObject
-* 
-* A good implementation example here: http://code.google.com/apis/maps/articles/mvcfun.html
-* 
-* Also, a fairly decent usuage overview: http://groups.google.com/group/google-maps-js-api-v3/browse_thread/thread/db6877615d7f4641/def7c933666a1f63?lnk=raot
-* 
-* @author John Smith
-*/
+ * Copyright 2011 urbanplum.eu.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * An implementation of the Key Value Observer pattern, that makes our MVC based lives easier.
+ * 
+ * Inspired by Google's MVCObject: http://code.google.com/apis/maps/documentation/javascript/reference.html#MVCObject
+ *
+ * Facilitates easy binding of View objects to their respective Models. It's super mega hot.
+ *
+ * @author John Smith - john@urbanplum.eu
+ */
 function MVCObject(){};
 
 MVCObject.prototype.bindTo = function(key, target, target_key, no_notify)
@@ -50,10 +61,8 @@ MVCObject.prototype.get = function(key)
 
 MVCObject.prototype.notify = function(key)
 {
-	alert('this doesn\'t do anything... What should it do?');
+	// Appears in the google API reference, but no idea what it does..
 };
-
-
 
 MVCObject.prototype.set = function(key, value)
 {
