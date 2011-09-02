@@ -8,5 +8,5 @@ Below we'll build a basic chat application that will illustrate the usefulness o
 
 ==Define our application's components==
   * *Model* - Will handle all the back-end data. Receives messages, broadcasts messages, registers new users when they join.
-  * *View* - Handles all display logic. Displays new messages, gives us the interface for us to write messages.
-  * *Controller* - Allows communication between the Model and the View. Interprets actions from the user and passes them to the Model and/or the View.
+  * *View* - Handles all display logic. Displays new messages, gives our users the interface to write new messages.
+  * *Controller* - Facilitates communication between the Model and the View. Interprets actions from users and passes them to the Model and/or the View.
