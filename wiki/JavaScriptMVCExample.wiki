@@ -6,8 +6,6 @@ Chances are, you've read all about the Model View Controller pattern but want a 
 
 Below we'll build a basic chat application that will illustrate the usefulness of the MVC pattern. We'll be using mvcobject-js to make life easier.
 
-= Details =
-
 ==Define our application's components==
   * *Model* - Will handle all the back-end data. Receives messages, broadcasts messages, registers new users when they join.
   * *View* - Handles all display logic. Displays new messages, gives us the interface for us to write messages.
