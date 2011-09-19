@@ -74,6 +74,9 @@ MVCObject.prototype._set = function(key, value, is_initial_set)
 	// If the property exists and is a complex object, update it.
 	if(this[key] && this[key].__jns !== undefined)
 	{
+		// The value has not changed. Return. Do not call '_changed' methods.
+		if(this[key].__jns === value) return;
+
 		this[key].__jns = value;
 	}
 	else // If the key does not exist, or not complex, create it.
