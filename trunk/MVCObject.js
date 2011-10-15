@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  * 
- * An implementation of the Key Value Observer pattern, that makes our MVC based lives easier.
+ * An implementation of the Key Value Observer pattern, that makes our MVC lives easier.
  * 
  * Inspired by Google's MVCObject: http://code.google.com/apis/maps/documentation/javascript/reference.html#MVCObject
  *
@@ -27,99 +27,244 @@ MVCObject.prototype.bindTo = function(key, target, target_key, no_notify)
 {
 	target_key = target_key || key;
 
-	// Make the target's key a complex object.
-	if(target[target_key] !== undefined && ( target[target_key] === null || !target[target_key].__jns ) )
+	var observers_value;
+
+	// Ensure the target has the property
+	if( !(target_key in target) )
 	{
-		target._set(target_key, target[target_key], true);
+		throw('Undefined: property "' + target_key + '" on target object.');
 	}
 
-	// Make my property a reference to the target's property
-	this[key] = target[target_key];
-
-	// Register callbacks
-	if(!this[key].__nms)
+	// Is the target's property already complex?
+	if(! target._isPropertyBound(target_key) )
 	{
-		this[key].__nms = [];
-
-		// Only add the first MVCObject's callback on the first bind
-		this[key].__nms.push({obj: target, key: target_key});
+		// Target's property is not yet a complex object. Make it one.
+		target[target_key] =
+		{
+			'__my_index': 0,
+			__observer_indexes: [],
+			__shared_object:
+			{
+				__value: target[target_key],
+				__observers: [{obj: target, key: target_key}]
+			}
+		};
 	}
 
-	this[key].__nms.push({obj: this, key: key});
+	// The target we're about to bind to has 'target_observers_length' observers already.
+	// We need to update the observers observers to reflect the change in offset once the arrays are merged.
+	var target_observers_length = target[target_key].__shared_object.__observers.length;
 
-	// Call the _changed event once upon binding.
-	if(no_notify) return;
+	// Add this new observers index to the target's array of observers' indexes.
+	target[target_key].__observer_indexes.push(target_observers_length);
 
-	if(this[key + '_changed']) this[key + '_changed']();
+	// Is this observer being observed?
+	if( this._isPropertyBound(key) )
+	{
+		// Make sure it's not already bound
+		if(this[key]['__my_index'] !== 0) throw('"' + key + '" is already bound');
+
+		// Both target and observer's properties are already complex.
+		
+		// We need to recursively update the observer's observers' indexes to reflect the merged observer array
+		this._updateObserverIndexes(key, target_observers_length);
+
+		// Merge all observers
+		target[target_key].__shared_object.__observers = target[target_key].__shared_object.__observers.concat(this[key].__shared_object.__observers);
+
+		// Store the observer's simple value prior to binding.
+		observers_value = this[key].__shared_object.__value;
+	}
+	// The observer is still a simple value.
+	else
+	{
+		observers_value = this[key];
+
+		// Make the observer a complex object
+		this[key] =
+		{
+			'__my_index': target_observers_length,
+			__observer_indexes : [],
+			__shared_object : null
+		};
+		
+		// Add the observer to the target's array of observers
+		target[target_key].__shared_object.__observers.push
+		(
+			{
+				obj: this,
+				key: key
+			}
+		);
+	}
+
+	// Loop over all observers
+	for(var i in target[target_key].__shared_object.__observers)
+	{
+		// Wait until we get to the observer's observers. Check to see it is a true observer and not unbound.
+		if(i < target_observers_length || target[target_key].__shared_object.__observers[i] === null) continue;
+
+		// Point all observers to the common shared object
+		target[target_key].__shared_object.__observers[i].obj[target[target_key].__shared_object.__observers[i].key].__shared_object = target[target_key].__shared_object;
+
+		// Value has not changed or this is the first bind and no_notify was set, no need to call the callbacks.
+		if(target[target_key].__shared_object.__value === observers_value || (i == target_observers_length && no_notify) ) continue;
+
+		// Trigger the observer's observer's callbacks, if there are any
+		if(target[target_key].__shared_object.__observers[i].key + '_changed' in target[target_key].__shared_object.__observers[i].obj) target[target_key].__shared_object.__observers[i].obj[target[target_key].__shared_object.__observers[i].key + '_changed']();
+	}
+};
+
+/**
+ * Recursively update observer indexes when when new objects are added to the shared object.
+ */
+MVCObject.prototype._updateObserverIndexes = function(key, offset_increase)
+{
+	// Updates the observer's index of themself
+	this[key]['__my_index'] += offset_increase;
+
+	for(var i in this[key].__observer_indexes)
+	{
+		// Make sure the property hasn't been unbound
+		if(this[key].__shared_object.__observers[this[key].__observer_indexes[i]] === null) continue;
+
+		// Recursively update observers
+		this[key].__shared_object.__observers[this[key].__observer_indexes[i]].obj._updateObserverIndexes(this[key].__shared_object.__observers[this[key].__observer_indexes[i]].key, offset_increase);
+		this[key].__observer_indexes[i] += offset_increase;
+	}
+};
+
+MVCObject.prototype._isPropertyBound = function(property)
+{
+	return this[property] !== null && typeof this[property] === 'object' && '__my_index' in this[property];	
 };
 
 MVCObject.prototype.get = function(key)
 {
 	// If the property is a complex object, return the value, otherwise, return the simple value
-	return this[key].__jns === undefined ? this[key] : this[key].__jns;
-};
-
-MVCObject.prototype.notify = function(key)
-{
-	// Appears in the google API reference, but no idea what it does..
+	return this._isPropertyBound(key) ? this[key].__shared_object.__value : this[key];
 };
 
 MVCObject.prototype.set = function(key, value)
 {
-	this._set(key, value, false);
-};
+	// Does the property exist on the object
+	if(!key in this) throw('Cannot set value for undefined property "' + key + '".');
 
-MVCObject.prototype._set = function(key, value, is_initial_set)
-{
-	// If the property exists and is a complex object, update it.
-	if(this[key] && this[key].__jns !== undefined)
+	// Is this a bound property?
+	if(this._isPropertyBound(key))
 	{
-		// The value has not changed. Return. Do not call '_changed' methods.
-		if(this[key].__jns === value) return;
+		// Has the property changed?
+		if(this[key].__shared_object.__value === value) return;
 
-		this[key].__jns = value;
-	}
-	else // If the key does not exist, or not complex, create it.
-	{
-		this[key] = {__jns: value};
-	}
-	
-	// Don't call all the callbacks on the initial set.
-	// This solves a bug if more than two objects are bound callbacks will be invoked, regardless of no_notify. 
-	if(is_initial_set) return;
+		// Set the new value
+		this[key].__shared_object.__value = value;
 
-	// Call any callback's belonging to objects bound to this value
-	for(var i in this[key].__nms)
-	{
-		var obj = this[key].__nms[i].obj;
-
-		if(obj[this[key].__nms[i].key + '_changed'])
+		// Call any callback's belonging to objects bound to this property
+		for(var i in this[key].__shared_object.__observers)
 		{
-			obj[this[key].__nms[i].key + '_changed']();
+			if(this[key].__shared_object.__observers[i] === null) continue;
+
+			this[key].__shared_object.__observers[i].obj[this[key].__shared_object.__observers[i].key + '_changed']();
 		}
+		
+		return;
 	}
+
+	// Non bound property
+
+	// Has the property changed?
+	if(this[key] === value) return;
+
+	// Set the value
+	this[key] = value;
+
+	// Manually trigger the changed event
+	if(key + '_changed' in this) this[key + '_changed']();
 };
 
 MVCObject.prototype.setValues = function(key_value_pairs)
 {
 	for(var key in key_value_pairs)
 	{
-		this._set(key, key_value_pairs[key], false);
+		this.set(key, key_value_pairs[key]);
+	}
+};
+
+/**
+ * Recursively re-binds observers to a new complex object
+ */
+MVCObject.prototype._rebindObservers = function(complex_object, key)
+{
+	for(var i in this[key].__observer_indexes)
+	{
+		var slice;
+
+		// Make sure the observer hasn't been unbound
+		if(this[key].__shared_object.__observers[this[key].__observer_indexes[i]] !== null)
+		{
+			slice = this[key].__shared_object.__observers.splice(this[key].__observer_indexes[i], 1, null)[0];
+
+			// The recursive bit
+			slice.obj._rebindObservers(complex_object, slice.key);
+
+			// Update this object's shared object reference
+			slice.obj[slice.key].__shared_object = complex_object;
+
+			// Update this objects observer index
+			this[key].__observer_indexes.splice(i, 1, complex_object.__observers.length); // Don't need to subtract one - about to add to the array
+			
+			slice.obj[slice.key]['__my_index'] = complex_object.__observers.length;
+		}
+		// This observer has been unbound
+		else
+		{
+			slice = null;
+		}
+
+		// Add the object as an observer to the new object
+		complex_object.__observers.push(slice);
+		
+		// Update my index so I know my index as an observer in the shared object
+		this[key]['__my_index'] = complex_object.__observers.length;
 	}
 };
 
 MVCObject.prototype.unbind = function(key)
 {
-	this[key] = this.get(key);
+	if( !('__my_index' in this[key]) || this[key]['__my_index'] === 0 ) throw('"' + key + '" is not a bound property.');
+
+	// Remove myself.
+	this[key].__shared_object.__observers[this[key]['__my_index']] = null;
+
+	// Do I have any observers (that aren't just me) ?
+	if(this[key].__observer_indexes.length === 0)
+	{
+		// Convert back to simple format
+		this[key] = this[key].__shared_object.__value;
+		return;
+	}
+
+	// I have observers. Re-bind to a new shared object.
+	var new_object =
+	{
+		__observers: [{obj: this, key: key}],
+		__value: this[key].__shared_object.__value
+	};
+
+	this._rebindObservers(new_object, key, 0);
+
+	this[key]['__my_index'] = 0;
+
+	this[key].__shared_object = new_object;
 };
 
 MVCObject.prototype.unbindAll = function()
 {
-	for(var key in this)
+	for(var property in this)
 	{
-		if(!this[key].__jns) continue;
+		if(!this._isPropertyBound(property)) continue;
 
-		this.unbind(key);
+		this.unbind(property);
 	}
 };
 
