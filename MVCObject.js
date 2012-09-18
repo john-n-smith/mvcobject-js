@@ -190,7 +190,7 @@ MVCObject.prototype.get = function(key)
 MVCObject.prototype.set = function(key, value, force_callback)
 {
 	// Does the property exist on the object
-	if(!key in this) throw('Cannot set value for undefined property "' + key + '".');
+	if(!(key in this)) throw('Cannot set value for undefined property "' + key + '".');
 
 	// Is this a bound property?
 	if(this._isPropertyBound(key))
